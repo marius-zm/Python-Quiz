@@ -4,6 +4,7 @@ from lib.functions import center_window
 from style import init_style
 import json, os
 
+
 class Login(tk.Tk):
     def __init__(self):
         super().__init__()
@@ -56,7 +57,6 @@ class Login(tk.Tk):
 
         # Dateipfad für Benutzerdaten
         self.user_data_file = "users.json"
-        # Stelle sicher, dass die users.json existiert
         self._check_create_user_data_file()
 
     def _check_create_user_data_file(self):
@@ -64,31 +64,43 @@ class Login(tk.Tk):
         if not os.path.exists(self.user_data_file):
             default_users = [
                 {"id": 1, "username": "admin", "password": "password123"},
-                {"id": 2, "username": "user", "password": "pass"}
+                {"id": 2, "username": "user", "password": "pass"},
             ]
             try:
-                with open(self.user_data_file, 'w', encoding='utf-8') as f:
+                with open(self.user_data_file, "w", encoding="utf-8") as f:
                     json.dump(default_users, f, indent=4)
-                messagebox.showinfo("Info", f"'{self.user_data_file}' wurde mit Standardbenutzern erstellt.")
+                messagebox.showinfo(
+                    "Info",
+                    f"'{self.user_data_file}' wurde mit Standardbenutzern erstellt.",
+                )
             except IOError as e:
-                messagebox.showerror("Fehler", f"Konnte '{self.user_data_file}' nicht erstellen: {e}")
-                self.quit() # Anwendung beenden, wenn Datei nicht erstellt werden kann
+                messagebox.showerror(
+                    "Fehler", f"Konnte '{self.user_data_file}' nicht erstellen: {e}"
+                )
+                self.quit()
 
     def get_users_from_file(self):
         """Lädt Benutzerdaten aus der JSON-Datei."""
         try:
-            with open(self.user_data_file, 'r', encoding='utf-8') as f:
+            with open(self.user_data_file, "r", encoding="utf-8") as f:
                 return json.load(f)
         except FileNotFoundError:
-            messagebox.showerror("Fehler", f"Die Datei '{self.user_data_file}' wurde nicht gefunden.")
+            messagebox.showerror(
+                "Fehler", f"Die Datei '{self.user_data_file}' wurde nicht gefunden."
+            )
             return []
         except json.JSONDecodeError:
-            messagebox.showerror("Fehler", f"Die Datei '{self.user_data_file}' ist keine gültige JSON-Datei.")
+            messagebox.showerror(
+                "Fehler",
+                f"Die Datei '{self.user_data_file}' ist keine gültige JSON-Datei.",
+            )
             return []
 
     def on_closing(self):
         """Fragt vor dem Beenden der Anwendung nach Bestätigung."""
-        if messagebox.askokcancel("Beenden", "Möchten Sie die Anwendung wirklich beenden?"):
+        if messagebox.askokcancel(
+            "Beenden", "Möchten Sie die Anwendung wirklich beenden?"
+        ):
             self.quit()
 
     def login_user(self, username, password):
@@ -106,7 +118,7 @@ class Login(tk.Tk):
             self.current_user["id"] = found_user["id"]
             self.authenticated = True
             messagebox.showinfo("Login erfolgreich", f"Willkommen, {username}!")
-            self.destroy() # Schließt das Login-Fenster
+            self.destroy()
         else:
             messagebox.showerror(
                 "Login fehlgeschlagen", "Falscher Benutzername oder Passwort."

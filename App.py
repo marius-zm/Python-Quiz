@@ -8,7 +8,7 @@ import json, random
 
 
 class App(tk.Tk):
-    def __init__(self):
+    def __init__(self, login_instance):
         super().__init__()
 
         self.title("Python Quiz")
@@ -19,7 +19,7 @@ class App(tk.Tk):
 
         self.create_questions()
 
-        # Originalfrage
+        # Originalquestions
         self.questions_original = self.load_questions("questions.json")
         if not self.questions_original:
             messagebox.showerror(
@@ -29,8 +29,55 @@ class App(tk.Tk):
             self.destroy()
             return
 
+        # Startmenu
+        self.start_menu = ttk.Frame(self)
+        self.start_menu.pack(expand=True, fill="both")
+        self.heading_label = ttk.Label(self.start_menu, text="Das Python-Quiz")
+        self.heading_label.pack()
+
+        self.welcome_label = ttk.Label(
+            self.start_menu, text=f"Willkommen, {login_instance.current_user["name"]}!"
+        )
+        self.welcome_label.pack()
+
+        self.selected_difficulty = tk.StringVar(self.start_menu)
+        self.selected_difficulty.set("einfach")  # default
+
+        self.difficulty_options = ["einfach", "mittel", "schwer"]
+
+        self.difficulty_label = ttk.Label(
+            self.start_menu, text="Wählen Sie den Schwierigkeitsgrad:"
+        )
+        self.difficulty_label.pack(pady=10)
+
+        self.difficulty_menu = ttk.OptionMenu(
+            self.start_menu,
+            self.selected_difficulty,
+            self.selected_difficulty.get(),
+            *self.difficulty_options,
+            command=self.on_difficulty_selected,
+        )
+        self.difficulty_menu.pack(pady=5)
+
+        self.status_label = ttk.Label(self.start_menu, text="")
+        self.status_label.pack(pady=5)
+
+        self.start_button = ttk.Button(
+            self.start_menu, text="Start Quiz", command=self.start_new_quiz
+        )
+        self.start_button.pack()
+
+        self.beenden_button = ttk.Button(
+            self.start_menu, text="Quiz beenden", command=self.destroy
+        )
+        self.beenden_button.pack()
+
         self.create_widgets()
-        self.start_new_quiz()  # Startet das Quiz initial und mischt die Fragen
+
+    # METHODS
+    def on_difficulty_selected(self, difficulty):
+
+        self.status_label.config(text=f"Ausgewählter Schwierigkeitsgrad: {difficulty}")
 
     def create_questions(self):
         try:
@@ -58,9 +105,13 @@ class App(tk.Tk):
             return None
 
     def create_widgets(self):
-        """Erzeugt die initialen GUI-Widgets."""
+        self.questions_frame = ttk.Frame(self)
         self.question_label = ttk.Label(
-            self, text="", wraplength=550, font=("Arial", 14), justify="left"
+            self.questions_frame,
+            text="",
+            wraplength=550,
+            font=("Arial", 14),
+            justify="left",
         )
         self.question_label.pack(pady=20)
 
@@ -70,7 +121,7 @@ class App(tk.Tk):
         self.radio_buttons = []
         for i in range(4):
             rb = ttk.Radiobutton(
-                self,
+                self.questions_frame,
                 text="",
                 variable=self.radio_var,
                 value=i,
@@ -79,26 +130,16 @@ class App(tk.Tk):
             self.radio_buttons.append(rb)
 
         self.weiter_button = ttk.Button(
-            self,
+            self.questions_frame,
             text="Weiter",
             command=self.next_question_handler,
         )
         self.weiter_button.pack(pady=20)
 
-        self.punkte_label = ttk.Label(self, text="Punkte: 0")
+        self.punkte_label = ttk.Label(self.questions_frame, text="Punkte: 0")
         self.punkte_label.pack(side="bottom", pady=10)
 
-        self.beenden_button = ttk.Button(
-            self, text="Quiz beenden", command=self.destroy
-        )
-        self.wiederholen_button = ttk.Button(
-            self,
-            text="Quiz wiederholen",
-            command=self.start_new_quiz,
-        )
-
     def start_new_quiz(self):
-        """Setzt das Quiz zurück, mischt die Fragen und beginnt von vorne."""
         self.aktuelle_frage_index = 0
         self.punkte = 0
         self.nutzer_antworten = []
@@ -114,9 +155,10 @@ class App(tk.Tk):
         self.weiter_button.pack(pady=20)
         self.punkte_label.pack(side="bottom", pady=10)
 
-        self.beenden_button.pack_forget()
-        self.wiederholen_button.pack_forget()
+        # Hide widgets
+        self.start_menu.pack_forget()
 
+        self.questions_frame.pack(expand=True, fill="both")
         self.show_questions()
 
     def show_questions(self):
@@ -184,14 +226,8 @@ class App(tk.Tk):
         except Exception as e:
             print(f"Fehler beim Speichern des Ergebnisses: {e}")
 
-        self.question_label.pack_forget()
-        for rb in self.radio_buttons:
-            rb.pack_forget()
-        self.weiter_button.pack_forget()
-        self.punkte_label.pack_forget()
-
-        self.wiederholen_button.pack(pady=10)
-        self.beenden_button.pack(pady=5)
+        self.questions_frame.pack_forget()
+        self.start_menu.pack(expand=True, fill="both")
 
     def run(self):
         center_window(self, self.width, self.height)
