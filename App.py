@@ -140,25 +140,33 @@ class App(tk.Tk):
         self.punkte_label.pack(side="bottom", pady=10)
 
     def start_new_quiz(self):
+        difficulty = self.selected_difficulty.get()
+
+        # Filtere die Fragen basierend auf der Auswahl.
+        if difficulty == "Alle":
+            self.questions = list(self.questions_original)
+        else:
+            self.questions = [
+                q
+                for q in self.questions_original
+                if q["schwierigkeitsgrad"] == difficulty
+            ]
+
+        # Prüfen, ob für die Auswahl überhaupt Fragen vorhanden sind.
+        if not self.questions:
+            messagebox.showinfo(
+                "Keine Fragen",
+                f"Es gibt keine Fragen mit dem Schwierigkeitsgrad '{difficulty}'.",
+            )
+            return
+
         self.aktuelle_frage_index = 0
         self.punkte = 0
         self.nutzer_antworten = []
-
-        # Shuffle questions
-        self.questions = list(self.questions_original)
         random.shuffle(self.questions)
 
-        self.question_label.pack(pady=20)
-        for rb in self.radio_buttons:
-            rb.pack(anchor="w", padx=50, pady=5)
-            rb.config(state="normal")
-        self.weiter_button.pack(pady=20)
-        self.punkte_label.pack(side="bottom", pady=10)
-
-        # Hide widgets
         self.start_menu.pack_forget()
-
-        self.questions_frame.pack(expand=True, fill="both")
+        self.questions_frame.pack(expand=True, fill="both", padx=10, pady=10)
         self.show_questions()
 
     def show_questions(self):
@@ -182,7 +190,6 @@ class App(tk.Tk):
             self.show_results()
 
     def next_question_handler(self):
-        """Verarbeitet die Antwort des Benutzers und geht zur nächsten Frage."""
         ausgewaehlter_index = self.radio_var.get()
 
         if ausgewaehlter_index == -1:
@@ -202,32 +209,92 @@ class App(tk.Tk):
         self.show_questions()
 
     def show_results(self):
-        """Zeigt das Endergebnis des Quiz an und bietet Optionen zur Wiederholung/Beenden."""
+        """Zeigt das Endergebnis in einem neuen Fenster an."""
+        self.questions_frame.pack_forget()
+        self.create_results_window()
+        self.save_result()
+        self.start_menu.pack(expand=True, fill="both")
+
+    def create_results_window(self):
+        """Erstellt ein neues Fenster mit der detaillierten Quiz-Auswertung."""
+        results_window = tk.Toplevel(self)
+        results_window.title("Quiz-Ergebnisse")
+        results_window.geometry("700x550")
+
+        main_frame = ttk.Frame(results_window)
+        main_frame.pack(fill="both", expand=True)
+
+        canvas = tk.Canvas(main_frame)
+        scrollbar = ttk.Scrollbar(main_frame, orient="vertical", command=canvas.yview)
+        scrollable_frame = ttk.Frame(canvas)
+
+        scrollable_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        )
+
+        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar.set)
+
+        canvas.pack(side="left", fill="both", expand=True)
+        scrollbar.pack(side="right", fill="y")
+
         gesamtfragen = len(self.questions)
         prozent = (self.punkte / gesamtfragen) * 100 if gesamtfragen > 0 else 0
+        summary_text = f"Ergebnis: {self.punkte} von {gesamtfragen} richtig ({prozent:.2f}%)"
+        summary_label = ttk.Label(scrollable_frame, text=summary_text, font=("Helvetica", 14, "bold"))
+        summary_label.pack(pady=10, padx=10)
 
-        ergebnis_text = (
-            f"Quiz beendet!\n"
-            f"Sie haben {self.punkte} von {gesamtfragen} Fragen richtig beantwortet.\n"
-            f"Das entspricht {prozent:.2f}%."
-        )
-        messagebox.showinfo("Quiz Ergebnis", ergebnis_text)
+        for i, question_obj in enumerate(self.questions):
+            q_frame = ttk.Frame(scrollable_frame, padding=10, relief="groove", borderwidth=1)
+            q_frame.pack(pady=5, padx=10, fill="x")
 
+            q_text = f"{i+1}. {question_obj['frage']}"
+            q_label = ttk.Label(q_frame, text=q_text, wraplength=600, font=("Helvetica", 11, "bold"))
+            q_label.pack(anchor="w")
+
+            user_answer_index = self.nutzer_antworten[i]
+            user_answer_text = question_obj['antworten'][user_answer_index]
+            correct_answer_index = question_obj['richtige_antwort_index']
+
+            color = "green" if user_answer_index == correct_answer_index else "red"
+            
+            user_answer_label = ttk.Label(q_frame, text=f"Deine Antwort: {user_answer_text}", foreground=color, wraplength=600)
+            user_answer_label.pack(anchor="w", pady=(5,0))
+
+            if user_answer_index != correct_answer_index:
+                correct_answer_text = question_obj['antworten'][correct_answer_index]
+                correct_answer_label = ttk.Label(q_frame, text=f"Richtige Antwort: {correct_answer_text}", foreground="green", wraplength=600)
+                correct_answer_label.pack(anchor="w")
+
+        close_button = ttk.Button(results_window, text="Schließen", command=results_window.destroy)
+        close_button.pack(pady=10)
+        
+        results_window.transient(self)
+        results_window.grab_set()
+        self.wait_window(results_window)
+    
+    def save_result(self):
+        """Speichert das Quizergebnis in einer JSON-Datei."""
         ergebnis_data = {
             "datum": datetime.now().strftime("%Y-%m-%d_%H-%M-%S"),
+            "schwierigkeit": self.selected_difficulty.get(),
             "punkte": self.punkte,
-            "gesamtfragen": gesamtfragen,
-            "nutzer_antworten": self.nutzer_antworten,
+            "gesamtfragen": len(self.questions),
         }
         try:
-            with open("quiz_results.json", "a", encoding="utf-8") as f:
-                f.write(json.dumps(ergebnis_data, indent=4) + ",\n")
-            print("Ergebnis gespeichert: quiz_results.json")
+            try:
+                with open("quiz_results.json", "r", encoding="utf-8") as f:
+                    results = json.load(f)
+            except (FileNotFoundError, json.JSONDecodeError):
+                results = []
+            
+            results.append(ergebnis_data)
+            with open("quiz_results.json", "w", encoding="utf-8") as f:
+                json.dump(results, f, indent=4, ensure_ascii=False)
+
         except Exception as e:
             print(f"Fehler beim Speichern des Ergebnisses: {e}")
-
-        self.questions_frame.pack_forget()
-        self.start_menu.pack(expand=True, fill="both")
 
     def run(self):
         center_window(self, self.width, self.height)

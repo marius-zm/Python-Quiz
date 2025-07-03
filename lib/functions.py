@@ -3,14 +3,6 @@ from tkinter import messagebox as mb
 from tkinter import filedialog as fd
 
 
-def increment(var: tk.IntVar):
-    var.set(var.get() + 1)
-
-
-def decrement(var: tk.IntVar):
-    var.set(var.get() - 1)
-
-
 def center_window(window, width, height):
     screen_width = window.winfo_screenwidth()
     screen_height = window.winfo_screenheight()

@@ -60,10 +60,9 @@ class Login(tk.Tk):
         self._check_create_user_data_file()
 
     def _check_create_user_data_file(self):
-        """Überprüft, ob die users.json existiert, und erstellt sie ggf. mit Beispieldaten."""
         if not os.path.exists(self.user_data_file):
             default_users = [
-                {"id": 1, "username": "admin", "password": "password123"},
+                {"id": 1, "username": "admin", "password": "password"},
                 {"id": 2, "username": "user", "password": "pass"},
             ]
             try:
@@ -80,7 +79,6 @@ class Login(tk.Tk):
                 self.quit()
 
     def get_users_from_file(self):
-        """Lädt Benutzerdaten aus der JSON-Datei."""
         try:
             with open(self.user_data_file, "r", encoding="utf-8") as f:
                 return json.load(f)
@@ -97,14 +95,12 @@ class Login(tk.Tk):
             return []
 
     def on_closing(self):
-        """Fragt vor dem Beenden der Anwendung nach Bestätigung."""
         if messagebox.askokcancel(
             "Beenden", "Möchten Sie die Anwendung wirklich beenden?"
         ):
             self.quit()
 
     def login_user(self, username, password):
-        """Versucht den Benutzer anhand der JSON-Datei zu authentifizieren."""
         users = self.get_users_from_file()
         found_user = None
 
@@ -125,6 +121,5 @@ class Login(tk.Tk):
             )
 
     def run(self):
-        """Zentriert das Fenster und startet die Tkinter-Hauptschleife."""
         center_window(self, self.width, self.height)
         self.mainloop()
