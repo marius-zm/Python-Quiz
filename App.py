@@ -31,24 +31,36 @@ class App(tk.Tk):
 
         # Startmenu
         self.start_menu = ttk.Frame(self)
-        self.start_menu.pack(expand=True, fill="both")
-        self.heading_label = ttk.Label(self.start_menu, text="Das Python-Quiz")
-        self.heading_label.pack()
+        self.start_menu.pack(expand=True, fill="both")  # general padding
 
-        self.welcome_label = ttk.Label(
-            self.start_menu, text=f"Willkommen, {login_instance.current_user["name"]}!"
+        # Heading with larger font
+        self.heading_label = ttk.Label(
+            self.start_menu,
+            text="Das Python-Quiz",
+            font=("Helvetica", 24, "bold")
         )
-        self.welcome_label.pack()
+        self.heading_label.pack(pady=(0, 20))  # top spacing
 
+        # Welcome message for current user
+        self.welcome_label = ttk.Label(
+            self.start_menu,
+            text=f"Willkommen, {login_instance.current_user['name']}!",
+            font=("Helvetica", 14)
+        )
+        self.welcome_label.pack(pady=(0, 20))
+
+        # Difficulty label
+        self.difficulty_label = ttk.Label(
+            self.start_menu,
+            text="Wählen Sie den Schwierigkeitsgrad:",
+            font=("Helvetica", 12)
+        )
+        self.difficulty_label.pack(pady=(0, 10))
+
+        # Dropdown for difficulty
         self.selected_difficulty = tk.StringVar(self.start_menu)
         self.selected_difficulty.set("einfach")  # default
-
         self.difficulty_options = ["einfach", "mittel", "schwer"]
-
-        self.difficulty_label = ttk.Label(
-            self.start_menu, text="Wählen Sie den Schwierigkeitsgrad:"
-        )
-        self.difficulty_label.pack(pady=10)
 
         self.difficulty_menu = ttk.OptionMenu(
             self.start_menu,
@@ -57,18 +69,25 @@ class App(tk.Tk):
             *self.difficulty_options,
             command=self.on_difficulty_selected,
         )
-        self.difficulty_menu.pack(pady=5)
+        self.difficulty_menu.pack(pady=(0, 20))
 
-        self.status_label = ttk.Label(self.start_menu, text="")
-        self.status_label.pack(pady=5)
+        # Status label
+        self.status_label = ttk.Label(self.start_menu, text="", font=("Helvetica", 10, "italic"))
+        self.status_label.pack(pady=(0, 10))
 
+        # Start button
         self.start_button = ttk.Button(
-            self.start_menu, text="Start Quiz", command=self.start_new_quiz
+            self.start_menu,
+            text="Start Quiz",
+            command=self.start_new_quiz
         )
-        self.start_button.pack()
+        self.start_button.pack(pady=(0, 10))
 
+        # Beenden button
         self.beenden_button = ttk.Button(
-            self.start_menu, text="Quiz beenden", command=self.destroy
+            self.start_menu,
+            text="Quiz beenden",
+            command=self.destroy
         )
         self.beenden_button.pack()
 
